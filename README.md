@@ -2,6 +2,8 @@
 
 A Three.js orbital ribbon composer for designing animated kinetic line systems in the browser.
 
+Live demo: https://codeaustral-oss.github.io/orbit-weaver/
+
 ![Orbit Weaver preview](./public/preview.svg)
 
 ## What it does
