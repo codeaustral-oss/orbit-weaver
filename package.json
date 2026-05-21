@@ -4,9 +4,13 @@
   "description": "A Three.js orbital ribbon composer for designing animated kinetic line systems.",
   "type": "module",
   "license": "MIT",
+  "homepage": "https://codeaustral-oss.github.io/orbit-weaver/",
   "repository": {
     "type": "git",
     "url": "https://github.com/codeaustral-oss/orbit-weaver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codeaustral-oss/orbit-weaver/issues"
   },
   "keywords": [
     "threejs",

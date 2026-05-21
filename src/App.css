@@ -190,7 +190,7 @@ button {
   border-top: 1px solid rgba(244, 241, 222, 0.11);
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   padding-top: 16px;
 }
 
@@ -206,6 +206,10 @@ button {
 
 .action-row button:hover {
   background: rgba(244, 241, 222, 0.17);
+}
+
+.hidden-input {
+  display: none;
 }
 
 .status-strip {
@@ -247,5 +251,9 @@ button {
     top: 16px;
     bottom: auto;
     justify-content: space-between;
+  }
+
+  .action-row {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

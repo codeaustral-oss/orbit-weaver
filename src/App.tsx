@@ -1,5 +1,6 @@
 import './App.css'
-import { Camera, RefreshCw, Shuffle, SlidersHorizontal, Waves } from 'lucide-react'
+import { Camera, Download, RefreshCw, Shuffle, SlidersHorizontal, Upload, Waves } from 'lucide-react'
+import type { ChangeEvent } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
@@ -38,6 +39,28 @@ const initialSettings: WeaverSettings = {
   palette: palettes[0].name,
   mode: 'braid',
   seed: 24591,
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value))
+}
+
+function normalizeSettings(input: unknown): WeaverSettings {
+  const source = typeof input === 'object' && input ? input as Partial<WeaverSettings> : {}
+  const mode = source.mode && ['braid', 'gyre', 'halo'].includes(source.mode) ? source.mode : initialSettings.mode
+  const palette = palettes.some((item) => item.name === source.palette) ? source.palette! : initialSettings.palette
+
+  return {
+    rings: Math.round(clamp(Number(source.rings) || initialSettings.rings, 3, 18)),
+    strands: Math.round(clamp(Number(source.strands) || initialSettings.strands, 2, 10)),
+    twist: clamp(Number(source.twist) || initialSettings.twist, 0.05, 1.5),
+    depth: clamp(Number(source.depth) || initialSettings.depth, 0.1, 2.3),
+    speed: clamp(Number(source.speed) || initialSettings.speed, 0, 1.6),
+    tilt: clamp(Number(source.tilt) || initialSettings.tilt, 0.2, 1.6),
+    palette,
+    mode,
+    seed: Math.round(clamp(Number(source.seed) || initialSettings.seed, 1, 99999)),
+  }
 }
 
 function randomFrom(seed: number) {
@@ -157,6 +180,7 @@ function RangeControl({ label, value, min, max, step, onChange, format }: RangeC
 
 function App() {
   const mountRef = useRef<HTMLDivElement | null>(null)
+  const presetInputRef = useRef<HTMLInputElement | null>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const settingsRef = useRef<WeaverSettings>(initialSettings)
   const [settings, setSettings] = useState<WeaverSettings>(initialSettings)
@@ -165,6 +189,23 @@ function App() {
   useEffect(() => {
     settingsRef.current = settings
   }, [settings])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLButtonElement) {
+        return
+      }
+
+      if (event.key === '1') updateSetting('mode', 'braid')
+      if (event.key === '2') updateSetting('mode', 'gyre')
+      if (event.key === '3') updateSetting('mode', 'halo')
+      if (event.key.toLowerCase() === 'r') updateSetting('seed', Math.floor(Math.random() * 80000) + 12000)
+      if (event.key.toLowerCase() === '0') setSettings(initialSettings)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   useEffect(() => {
     const container = mountRef.current
@@ -263,6 +304,31 @@ function App() {
     link.click()
   }
 
+  const exportPreset = () => {
+    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `orbit-weaver-preset-${settings.seed}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const importPreset = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        setSettings(normalizeSettings(JSON.parse(String(reader.result))))
+      } catch {
+        window.alert('This preset file could not be read.')
+      }
+      event.target.value = ''
+    }
+    reader.readAsText(file)
+  }
+
   return (
     <main className="weaver-shell">
       <section className="stage" ref={mountRef} aria-label="Animated Three.js orbit composer" />
@@ -331,10 +397,19 @@ function App() {
             <RefreshCw size={16} />
             Reset
           </button>
+          <button type="button" onClick={exportPreset}>
+            <Download size={16} />
+            JSON
+          </button>
+          <button type="button" onClick={() => presetInputRef.current?.click()}>
+            <Upload size={16} />
+            Import
+          </button>
           <button type="button" onClick={exportImage}>
             <Camera size={16} />
             PNG
           </button>
+          <input ref={presetInputRef} className="hidden-input" type="file" accept="application/json,.json" onChange={importPreset} />
         </div>
       </aside>
 
